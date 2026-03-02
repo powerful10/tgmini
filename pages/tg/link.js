@@ -19,13 +19,25 @@ export default function TgLinkPage() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [submitError, setSubmitError] = useState("");
+  const [linkedReport, setLinkedReport] = useState(null);
 
   const linked = useMemo(() => Boolean(me && me.linkStatus && me.linkStatus.linked), [me]);
+
+  function linkErrorText(code) {
+    const safe = String(code || "link_failed").trim();
+    if (safe === "code_expired") return "This code expired. Generate a new one on the website.";
+    if (safe === "code_used") return "This code was already used by another Telegram account.";
+    if (safe === "uid_linked_to_other_telegram") return "This game account is already locked to another Telegram account.";
+    if (safe === "telegram_already_linked") return "This Telegram account is already linked to a different game account.";
+    if (safe === "code_not_found") return "Code not found. Check the code and try again.";
+    return `Link failed (${safe}).`;
+  }
 
   async function onSubmit(event) {
     event.preventDefault();
     setSubmitError("");
     setMessage("");
+    setLinkedReport(null);
 
     const normalized = sanitizeCode(code);
     if (!/^[A-Z0-9]{6,8}$/.test(normalized)) {
@@ -42,13 +54,15 @@ export default function TgLinkPage() {
 
     if (!result.ok) {
       const errCode = result.data && result.data.error ? result.data.error : "link_failed";
-      setSubmitError(`Link failed (${errCode}).`);
+      setSubmitError(linkErrorText(errCode));
       return;
     }
 
-    setMessage("Account linked successfully. Returning to home...");
+    const report = result.data && result.data.linkedAccount ? result.data.linkedAccount : null;
+    setLinkedReport(report);
+    setMessage("Account linked successfully and locked to this Telegram profile.");
     await refreshMe();
-    setTimeout(() => router.push("/tg"), 450);
+    setTimeout(() => router.push("/tg"), 1200);
   }
 
   return (
@@ -102,6 +116,15 @@ export default function TgLinkPage() {
               </button>
               {submitError ? <p className={styles.error}>{submitError}</p> : null}
               {message ? <p className={styles.success}>{message}</p> : null}
+              {linkedReport ? (
+                <div className={styles.field}>
+                  <p className={styles.help}>
+                    Linked account: {linkedReport.displayName || linkedReport.uid}
+                  </p>
+                  <p className={styles.help}>UID: {linkedReport.uid}</p>
+                  <p className={styles.help}>Lock: only this Telegram account can use this link.</p>
+                </div>
+              ) : null}
             </form>
           </section>
         </>

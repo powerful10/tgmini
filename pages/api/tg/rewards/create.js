@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 
 import { setCors } from "../../../../lib/http";
 import { getFirestoreOrError, normalizePlacement, requireTgSession } from "../../../../lib/tg-api";
-import { REWARD_EVENT_TTL_MS, periodKeyFromStart, quotaFromLimiter } from "../../../../lib/tg-rewards";
+import { REWARD_EVENT_TTL_MS, periodKeyFromStart, quotaFromLimiter, toMillis } from "../../../../lib/tg-rewards";
 
 export default async function handler(req, res) {
   setCors(req, res);
@@ -46,6 +46,41 @@ export default async function handler(req, res) {
     return;
   }
 
+  const existingSnap = await db.collection("reward_events").where("uid", "==", uid).limit(25).get();
+  let activePending = null;
+
+  for (const doc of existingSnap.docs) {
+    const data = doc.data() || {};
+    const status = String(data.status || "").trim();
+    if (status !== "pending") continue;
+    const expiresAtMs = toMillis(data.expiresAt);
+    if (expiresAtMs <= now) continue;
+
+    const createdAtMs = toMillis(data.createdAt);
+    if (
+      !activePending ||
+      createdAtMs > toMillis(activePending.createdAt)
+    ) {
+      activePending = {
+        rewardId: doc.id,
+        createdAt: createdAtMs,
+        expiresAt: expiresAtMs
+      };
+    }
+  }
+
+  if (activePending) {
+    res.status(200).json({
+      ok: true,
+      rewardId: activePending.rewardId,
+      createdAt: activePending.createdAt,
+      expiresAt: activePending.expiresAt,
+      quota,
+      reused: true
+    });
+    return;
+  }
+
   const rewardId = crypto.randomUUID();
   const expiresAt = now + REWARD_EVENT_TTL_MS;
 
@@ -65,7 +100,9 @@ export default async function handler(req, res) {
   res.status(200).json({
     ok: true,
     rewardId,
+    createdAt: now,
     expiresAt,
-    quota
+    quota,
+    reused: false
   });
 }

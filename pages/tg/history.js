@@ -5,10 +5,15 @@ import { apiFetch, useTgSession } from "../../lib/tg-miniapp-client";
 import styles from "../../styles/tg-miniapp.module.css";
 
 function formatEventLine(item) {
-  const type = String(item.rewardType || "").trim() || "pending";
-  const amount = item.amount == null ? "-" : Number(item.amount);
-  if (type === "pending") return "Pending";
-  return `${type} +${amount}`;
+  const status = String(item && item.status ? item.status : "").trim();
+  if (status === "pending") return "Pending";
+  if (status === "expired") return "Expired";
+
+  const rewardType = String(item && item.rewardType ? item.rewardType : "").trim();
+  const amount = Math.max(0, Math.floor(Number(item && item.amount ? item.amount : 0)));
+  const crystals = rewardType === "crystals" ? amount : 0;
+  const credits = rewardType === "credits" ? amount : 0;
+  return `Crystals +${crystals}, Credits +${credits}`;
 }
 
 function formatWhen(ts) {

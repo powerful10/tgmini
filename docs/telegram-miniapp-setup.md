@@ -22,15 +22,14 @@ In BotFather:
 - `TELEGRAM_BOT_TOKEN`
 - `TG_SESSION_SECRET`
 - `POSTBACK_SECRET`
+- `TG_ENABLE_MOCK_AD` (optional fallback payout mode for local testing)
+- `TG_MOCK_AD_SECONDS` (optional, default `15`)
 - `NEXT_PUBLIC_TG_CHANNEL_URL` (optional)
 - `NEXT_PUBLIC_TG_BOT_URL` (optional)
+- `NEXT_PUBLIC_MONETAG_SDK_URL` (default `https://libtl.com/sdk.js`)
+- `NEXT_PUBLIC_MONETAG_ZONE_ID` (your Monetag zone id, e.g. `10673518`)
+- `NEXT_PUBLIC_MONETAG_SDK_FN` (SDK function, e.g. `show_10673518`)
 - `FIREBASE_SERVICE_ACCOUNT_JSON` or `FIREBASE_SERVICE_ACCOUNT_FILE`
-
-Optional local dev helper:
-
-- `NEXT_PUBLIC_DEV_POSTBACK_SECRET`
-  - In local dev only, set this equal to `POSTBACK_SECRET` so `/tg/ad` can call `/api/tg/rewards/postback`.
-  - Do not use this in production.
 
 ## 3) Local Run
 
@@ -65,22 +64,30 @@ For Telegram auth, open through Telegram Mini App launch, not a regular browser 
 ## 6) Reward Flow
 
 1. Mini app starts reward via `POST /api/tg/rewards/create` (creates `pending` event).
-2. Ad network postback calls `POST /api/tg/rewards/postback` with header:
-   - `X-Postback-Secret: <POSTBACK_SECRET>`
-3. Server transaction:
+2. `/tg/ad` opens Monetag rewarded interstitial using SDK function and sends the same `rewardId` as `ymid`.
+3. Monetag postback calls `/api/tg/rewards/postback` with:
+   - secret via `X-Postback-Secret` header, or `token=<POSTBACK_SECRET>` query param
+   - reward id via `ymid` (or `rewardId`/`subid`)
+4. Server transaction (idempotent):
    - verifies pending event
    - enforces limiter (10 payouts per 90 minutes per `uid`)
    - picks weighted random reward
    - updates `users/{uid}` currency
    - marks event `paid`.
+5. Mini app polls `GET /api/tg/rewards/status` until `paid` and refreshes balances.
 
 ## 7) Monetag Integration Later
 
-When integrating Monetag:
+Recommended configuration for Rewarded Interstitial:
 
-1. Include generated `rewardId` as `subid`/custom macro in the ad request.
-2. Configure Monetag postback URL to call:
-   - `POST https://<your-domain>/api/tg/rewards/postback`
-   - Header `X-Postback-Secret: <POSTBACK_SECRET>`
-   - Body `{ "rewardId": "<subid>" }`
-3. Keep `POSTBACK_SECRET` private and rotate if leaked.
+1. Add SDK in mini app (already done on `/tg/ad`):
+   - `https://libtl.com/sdk.js`
+   - `data-zone=<zone id>`
+   - `data-sdk=show_<zone id>`
+2. Call SDK with event id:
+   - `show_<zone>({ type: "end", ymid: "<rewardId>" })`
+3. Configure Monetag postback URL:
+   - `https://<your-domain>/api/tg/rewards/postback?token=<POSTBACK_SECRET>&ymid={ymid}&reward_event_type={reward_event_type}&event_type={event_type}`
+4. Keep `POSTBACK_SECRET` private and rotate immediately if leaked.
+5. Optional local/testing fallback without ad network postback:
+   - use `POST /api/tg/rewards/mock-complete` (requires authenticated mini app session).

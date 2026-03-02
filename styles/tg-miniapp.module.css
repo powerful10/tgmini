@@ -226,6 +226,86 @@
   }
 }
 
+.adMockBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 14, 0.82);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 9999;
+}
+
+.adMockWindow {
+  width: min(440px, 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(132, 199, 255, 0.28);
+  background: linear-gradient(150deg, rgba(8, 18, 35, 0.98), rgba(6, 16, 30, 0.96));
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.45);
+}
+
+.adMockTop {
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(132, 198, 255, 0.22);
+}
+
+.adMockTitle {
+  margin: 0;
+  font-family: "Audiowide", "Exo 2", sans-serif;
+  font-size: 15px;
+}
+
+.adMockBody {
+  min-height: 160px;
+  padding: 14px;
+  display: grid;
+  place-items: center;
+}
+
+.adTimerWrap {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+}
+
+.adTimerTrack {
+  fill: none;
+  stroke: rgba(133, 198, 255, 0.2);
+  stroke-width: 4;
+}
+
+.adTimerRing {
+  fill: none;
+  stroke: #ffd08a;
+  stroke-width: 4;
+  transform: rotate(-90deg);
+  transform-origin: 28px 28px;
+  transition: stroke-dashoffset 120ms linear;
+}
+
+.adTimerText {
+  position: absolute;
+  font-weight: 800;
+  font-size: 14px;
+  color: #fff4d6;
+}
+
+.adCloseBtn {
+  min-width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 200, 128, 0.88);
+  background: linear-gradient(135deg, #ffd08a, #ffb259);
+  color: #2b1903;
+  font-weight: 900;
+  cursor: pointer;
+}
+
 @media (max-width: 680px) {
   .grid2 {
     grid-template-columns: 1fr;

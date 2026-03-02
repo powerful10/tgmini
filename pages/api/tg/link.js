@@ -82,12 +82,17 @@ export default async function handler(req, res) {
         throw new ApiError("uid_linked_to_other_telegram", 409);
       }
 
+      const displayName = String(profile.name || profile.localBubbleName || "").trim();
+      const currentCredits = Math.max(0, Math.floor(Number(profile.credits || 0)));
+      const currentCrystals = Math.max(0, Math.floor(Number(profile.crystals || 0)));
+      const resolvedLinkedAt = tgLinkSnap.exists ? toMillis((tgLinkSnap.data() || {}).linkedAt) || now : now;
+
       tx.set(
         tgLinkRef,
         {
           uid,
           telegramUsername,
-          linkedAt: tgLinkSnap.exists ? toMillis((tgLinkSnap.data() || {}).linkedAt) || now : now,
+          linkedAt: resolvedLinkedAt,
           updatedAt: now
         },
         { merge: true }
@@ -117,11 +122,26 @@ export default async function handler(req, res) {
 
       return {
         uid,
-        alreadyLinked: Boolean(usedAt && usedByTelegramId === telegramId)
+        alreadyLinked: Boolean(usedAt && usedByTelegramId === telegramId),
+        linkedAt: resolvedLinkedAt,
+        linkedAccount: {
+          uid,
+          displayName: displayName || null,
+          telegramId,
+          telegramUsername: telegramUsername || null,
+          credits: currentCredits,
+          crystals: currentCrystals
+        }
       };
     });
 
-    res.status(200).json({ ok: true, uid: result.uid, alreadyLinked: result.alreadyLinked });
+    res.status(200).json({
+      ok: true,
+      uid: result.uid,
+      alreadyLinked: result.alreadyLinked,
+      linkedAt: result.linkedAt,
+      linkedAccount: result.linkedAccount
+    });
   } catch (error) {
     const status = Number(error && error.status ? error.status : 500);
     const code = String(error && error.code ? error.code : "link_failed");

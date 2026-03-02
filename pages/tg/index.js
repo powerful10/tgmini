@@ -15,6 +15,13 @@ function renderUserName(user) {
   return full || "-";
 }
 
+function shortUid(value) {
+  const uid = String(value || "").trim();
+  if (!uid) return "-";
+  if (uid.length <= 10) return uid;
+  return `${uid.slice(0, 6)}...${uid.slice(-4)}`;
+}
+
 export default function TgHomePage() {
   const { loading, error, me } = useTgSession();
   const [countdownMs, setCountdownMs] = useState(0);
@@ -68,6 +75,25 @@ export default function TgHomePage() {
               <span className={styles.statLabel}>Link Status</span>
               <span className={styles.statValue}>{me.linkStatus && me.linkStatus.linked ? "Linked" : "Not linked"}</span>
             </div>
+            {me.linkStatus && me.linkStatus.linked ? (
+              <>
+                <div className={styles.statRow}>
+                  <span className={styles.statLabel}>Game Account</span>
+                  <span className={styles.statValue}>
+                    {me.linkedAccount && me.linkedAccount.displayName
+                      ? me.linkedAccount.displayName
+                      : shortUid(me.linkStatus.uid)}
+                  </span>
+                </div>
+                <div className={styles.statRow}>
+                  <span className={styles.statLabel}>UID</span>
+                  <span className={styles.statValue}>{shortUid(me.linkStatus.uid)}</span>
+                </div>
+                <p className={styles.help}>
+                  Linked and locked: this StellarSiege account is bound to Telegram ID {String(me.telegramUser.id || "-")}.
+                </p>
+              </>
+            ) : null}
           </section>
 
           <section className={styles.card}>
@@ -80,6 +106,18 @@ export default function TgHomePage() {
               <span className={styles.statLabel}>Reset In</span>
               <span className={styles.statValue}>{formatRemainingTime(countdownMs)}</span>
             </div>
+            {me.wallet ? (
+              <>
+                <div className={styles.statRow}>
+                  <span className={styles.statLabel}>Crystals</span>
+                  <span className={styles.statValue}>{Number(me.wallet.crystals || 0)}</span>
+                </div>
+                <div className={styles.statRow}>
+                  <span className={styles.statLabel}>Credits</span>
+                  <span className={styles.statValue}>{Number(me.wallet.credits || 0)}</span>
+                </div>
+              </>
+            ) : null}
           </section>
 
           <section className={styles.card}>
