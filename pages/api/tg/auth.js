@@ -16,8 +16,6 @@ function fail(res, { status, error, stage, details }) {
     details: safeDetails
   };
 
-  // Vercel captures stdout/stderr in both preview and production.
-  // Keep prod payloads concise, and return rich debug only outside production.
   // eslint-disable-next-line no-console
   console.error("[api/tg/auth]", logPayload);
 
@@ -36,6 +34,7 @@ function fail(res, { status, error, stage, details }) {
 
 export default function handler(req, res) {
   setCors(req, res);
+  res.setHeader("Cache-Control", "no-store");
   if (req.method === "OPTIONS") return;
 
   if (req.method !== "POST") {
@@ -124,6 +123,8 @@ export default function handler(req, res) {
   res.status(200).json({
     ok: true,
     telegramUser: checked.user,
-    authDate: checked.authDate
+    authDate: checked.authDate,
+    // Fallback for WebViews that block third-party cookies.
+    sessionToken: token
   });
 }
