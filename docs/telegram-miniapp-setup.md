@@ -20,6 +20,10 @@ In BotFather:
 ## 2) Required Environment Variables
 
 - `TELEGRAM_BOT_TOKEN`
+- `TG_BOT_WEBHOOK_SECRET` (optional but recommended for Telegram webhook validation)
+- `TG_BOT_USERNAME` (example: `StellarSiegeRewardSystem_Bot`)
+- `TG_MINIAPP_URL` (example: `https://tgminiappss.vercel.app/tg`)
+- `TG_WELCOME_GIF_URL` (optional GIF URL for `/start` welcome message)
 - `TG_SESSION_SECRET`
 - `POSTBACK_SECRET`
 - `TG_ENABLE_MOCK_AD` (optional fallback payout mode for local testing)
@@ -93,3 +97,23 @@ Recommended configuration for Rewarded Interstitial:
 4. Keep `POSTBACK_SECRET` private and rotate immediately if leaked.
 5. Optional local/testing fallback without ad network postback:
    - use `POST /api/tg/rewards/mock-complete` (requires authenticated mini app session).
+
+## 8) Bot Start Welcome + Mini App Button
+
+Webhook route:
+
+- `POST /api/tg/bot/webhook`
+
+This route handles `/start` and `/help` and sends:
+
+- localized welcome text (UZ/EN/RU/TR by Telegram `language_code`)
+- GIF intro (if `TG_WELCOME_GIF_URL` set/reachable)
+- inline "Open Reward Center" button (`web_app.url = TG_MINIAPP_URL`)
+
+Set webhook in Telegram API:
+
+```bash
+https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook?url=https://<your-domain>/api/tg/bot/webhook&secret_token=<TG_BOT_WEBHOOK_SECRET>
+```
+
+If you do not use secret token, omit `secret_token` from the URL and leave `TG_BOT_WEBHOOK_SECRET` empty.
