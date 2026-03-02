@@ -24,6 +24,7 @@ In BotFather:
 - `TG_BOT_USERNAME` (example: `StellarSiegeRewardSystem_Bot`)
 - `TG_MINIAPP_URL` (example: `https://tgminiappss.vercel.app/tg`)
 - `TG_WELCOME_GIF_URL` (optional GIF URL for `/start` welcome message)
+- `TG_SUPPORT_URL` (optional direct support link for "Support" button)
 - `TG_SESSION_SECRET`
 - `POSTBACK_SECRET`
 - `TG_ENABLE_MOCK_AD` (optional fallback payout mode for local testing)
@@ -109,6 +110,7 @@ This route handles `/start` and `/help` and sends:
 - localized welcome text (UZ/EN/RU/TR by Telegram `language_code`)
 - GIF intro (if `TG_WELCOME_GIF_URL` set/reachable)
 - inline "Open Reward Center" button (`web_app.url = TG_MINIAPP_URL`)
+- language switch buttons (UZ / EN / RU / TR) via callback queries
 
 Set webhook in Telegram API:
 
