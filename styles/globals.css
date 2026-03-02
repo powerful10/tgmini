@@ -1,0 +1,44 @@
+html,
+body,
+#__next {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: #050b17;
+  color: #e8f4ff;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+.rootHome {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+
+.rootCard {
+  border: 1px solid rgba(150, 210, 255, 0.25);
+  background: rgba(9, 20, 40, 0.9);
+  border-radius: 16px;
+  padding: 20px;
+  width: min(560px, 100%);
+}
+
+.rootCard h1 {
+  margin: 0 0 10px;
+}
+
+.rootCard p {
+  margin: 0 0 12px;
+}
+
+.rootCard a {
+  color: #95d5ff;
+}
