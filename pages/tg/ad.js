@@ -145,7 +145,7 @@ export default function TgAdPage() {
       await adFn({
         type: "end",
         ymid: created.rewardId,
-        requestVar: `tg_reward_${MONETAG_ZONE_ID}`
+        requestVar: created.rewardId
       });
     } catch {
       setStatusNote("");

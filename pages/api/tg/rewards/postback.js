@@ -49,8 +49,8 @@ function hasMatchingSecret(expected, candidates) {
 }
 
 function rewardIdFromRequest(req) {
-  return firstValue(req.body, ["rewardId", "reward_id", "ymid", "subid", "sub_id"])
-    || firstValue(req.query, ["rewardId", "reward_id", "ymid", "subid", "sub_id"]);
+  return firstValue(req.body, ["rewardId", "reward_id", "ymid", "subid", "sub_id", "request_var", "requestVar"])
+    || firstValue(req.query, ["rewardId", "reward_id", "ymid", "subid", "sub_id", "request_var", "requestVar"]);
 }
 
 function rewardEventTypeFromRequest(req) {
