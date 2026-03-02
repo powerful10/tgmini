@@ -49,8 +49,8 @@ function hasMatchingSecret(expected, candidates) {
 }
 
 function rewardIdFromRequest(req) {
-  return firstValue(req.body, ["rewardId", "reward_id", "ymid", "subid", "sub_id", "request_var", "requestVar"])
-    || firstValue(req.query, ["rewardId", "reward_id", "ymid", "subid", "sub_id", "request_var", "requestVar"]);
+  return firstValue(req.body, ["rewardId", "reward_id", "ymid", "YMID", "subid", "sub_id", "request_var", "requestVar", "REQUEST_VAR"])
+    || firstValue(req.query, ["rewardId", "reward_id", "ymid", "YMID", "subid", "sub_id", "request_var", "requestVar", "REQUEST_VAR"]);
 }
 
 function rewardEventTypeFromRequest(req) {
@@ -62,7 +62,7 @@ function rewardEventIsPaid(value) {
   const safe = String(value || "").trim().toLowerCase();
   if (!safe) return null;
   if (["yes", "true", "1", "valued", "paid"].includes(safe)) return true;
-  if (["no", "false", "0", "unvalued", "unpaid"].includes(safe)) return false;
+  if (["no", "false", "0", "unvalued", "unpaid", "not_valued", "not-valued"].includes(safe)) return false;
   return null;
 }
 

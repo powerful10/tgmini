@@ -74,7 +74,9 @@ For Telegram auth, open through Telegram Mini App launch, not a regular browser 
    - picks weighted random reward
    - updates `users/{uid}` currency
    - marks event `paid`.
-5. Mini app polls `GET /api/tg/rewards/status` until `paid` and refreshes balances.
+5. Fast fallback: when Monetag SDK returns `reward_event_type=valued`, mini app calls:
+   - `POST /api/tg/rewards/frontend-complete` (still server-side payout, idempotent)
+6. Mini app polls `GET /api/tg/rewards/status` until `paid` and refreshes balances.
 
 ## 7) Monetag Integration Later
 

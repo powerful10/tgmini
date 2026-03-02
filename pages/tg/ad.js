@@ -11,6 +11,18 @@ const MONETAG_SDK_FN = String(process.env.NEXT_PUBLIC_MONETAG_SDK_FN || "show_10
 const STATUS_POLL_INTERVAL_MS = 1500;
 const STATUS_POLL_TIMEOUT_MS = 45000;
 
+function normalizeEventType(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function isValuedEvent(value) {
+  return ["yes", "true", "1", "valued", "paid"].includes(normalizeEventType(value));
+}
+
+function isNotValuedEvent(value) {
+  return ["no", "false", "0", "unvalued", "unpaid", "not_valued", "not-valued"].includes(normalizeEventType(value));
+}
+
 function rewardBreakdown(type, amount) {
   const safeType = String(type || "").trim();
   const safeAmount = Math.max(0, Math.floor(Number(amount || 0)));
@@ -140,19 +152,64 @@ export default function TgAdPage() {
     setSuccessMessage("");
     setStatusNote("Opening rewarded ad...");
     setRunningAd(true);
+    let adResult = null;
 
     try {
-      await adFn({
+      adResult = await adFn({
         type: "end",
         ymid: created.rewardId,
-        requestVar: created.rewardId
+        requestVar: created.rewardId,
+        request_var: created.rewardId,
+        catchIfNoFeed: true
       });
-    } catch {
+    } catch (error) {
+      const message = String(error && error.message ? error.message : "").toLowerCase();
       setStatusNote("");
-      setUiError("Ad was closed before completion or failed to open.");
+      if (message.includes("no feed")) {
+        setUiError("No ad feed is available right now. Retry in a few seconds.");
+      } else {
+        setUiError("Ad was closed before completion or failed to open.");
+      }
       return;
     } finally {
       setRunningAd(false);
+    }
+
+    const rewardEventType = normalizeEventType(
+      adResult && (adResult.reward_event_type || adResult.rewardEventType)
+    );
+    if (rewardEventType && isNotValuedEvent(rewardEventType)) {
+      setStatusNote("");
+      setUiError("Ad finished, but network marked this impression as not rewarded.");
+      await fetchRewardStatus(created.rewardId, { silentPending: true });
+      return;
+    }
+
+    if (rewardEventType && isValuedEvent(rewardEventType)) {
+      setStatusNote("Ad valued. Finalizing reward...");
+      const finalizeResult = await apiFetch("/api/tg/rewards/frontend-complete", {
+        method: "POST",
+        body: {
+          rewardId: created.rewardId,
+          sdkResult: adResult
+        }
+      });
+
+      if (finalizeResult.ok && finalizeResult.data && finalizeResult.data.status === "paid") {
+        const won = rewardBreakdown(finalizeResult.data.rewardType, finalizeResult.data.amount);
+        setResult((prev) => ({
+          ...(prev || {}),
+          rewardId: created.rewardId,
+          status: "paid",
+          rewardType: finalizeResult.data.rewardType || null,
+          amount: finalizeResult.data.amount == null ? null : Number(finalizeResult.data.amount),
+          paidAt: Number(finalizeResult.data.paidAt || Date.now())
+        }));
+        await refreshMe();
+        setStatusNote("");
+        setSuccessMessage(`Reward granted: Crystals +${won.crystals}, Credits +${won.credits}.`);
+        return;
+      }
     }
 
     setStatusNote("Ad completed. Verifying reward...");
