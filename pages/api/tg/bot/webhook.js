@@ -175,6 +175,18 @@ async function sendWelcome(chatId, locale) {
   });
 }
 
+function webhookFallbackMessage(chatId, locale) {
+  const localePack = i18n(locale);
+  return {
+    method: "sendMessage",
+    chat_id: chatId,
+    text: localePack.caption,
+    parse_mode: "HTML",
+    disable_web_page_preview: true,
+    reply_markup: buttons(localePack)
+  };
+}
+
 function verifyWebhook(req, res) {
   const expected = webhookSecret();
   if (!expected) return true;
@@ -226,6 +238,6 @@ export default async function handler(req, res) {
     console.error("[api/tg/bot/webhook] failed", {
       message: String(error && error.message ? error.message : "unknown")
     });
-    res.status(200).json({ ok: false, handled: true });
+    res.status(200).json(webhookFallbackMessage(chatId, userLang));
   }
 }
